@@ -129,7 +129,7 @@ msgid "Units"
 msgstr "Birimler"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:168
-#: lib/teslamate_web/live/geofence_live/form.html.heex:143
+#: lib/teslamate_web/live/geofence_live/form.html.heex:165
 #, elixir-autogen, elixir-format
 msgid "Back"
 msgstr "Geri"
@@ -172,13 +172,13 @@ msgid "Radius"
 msgstr "Yarıçap"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:172
-#: lib/teslamate_web/live/geofence_live/form.html.heex:147
+#: lib/teslamate_web/live/geofence_live/form.html.heex:169
 #, elixir-autogen, elixir-format
 msgid "Save"
 msgstr "Kaydet"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:173
-#: lib/teslamate_web/live/geofence_live/form.html.heex:148
+#: lib/teslamate_web/live/geofence_live/form.html.heex:170
 #: lib/teslamate_web/live/signin_live/index.html.heex:85
 #, elixir-autogen, elixir-format
 msgid "Saving..."
@@ -403,7 +403,7 @@ msgid "Charge Cost"
 msgstr "Şarj Tutarı"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:134
-#: lib/teslamate_web/live/geofence_live/form.html.heex:78
+#: lib/teslamate_web/live/geofence_live/form.html.heex:100
 #, elixir-autogen, elixir-format
 msgid "Cost"
 msgstr "Tutar"
@@ -482,7 +482,7 @@ msgstr "Bedava Supercharging"
 msgid "General Settings"
 msgstr "Genel Ayarlar"
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:110
+#: lib/teslamate_web/live/geofence_live/form.html.heex:132
 #, elixir-autogen, elixir-format
 msgid "Session fee"
 msgstr "Oturum ücreti"
@@ -493,7 +493,7 @@ msgid "Doors open"
 msgstr "Kapılar açık"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:142
-#: lib/teslamate_web/live/geofence_live/form.html.heex:86
+#: lib/teslamate_web/live/geofence_live/form.html.heex:108
 #, elixir-autogen, elixir-format
 msgid "Per kWh"
 msgstr "kWh başına"
@@ -503,24 +503,24 @@ msgstr "kWh başına"
 msgid "Total"
 msgstr "Toplam"
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:182
+#: lib/teslamate_web/live/geofence_live/form.html.heex:204
 #, elixir-format, elixir-autogen
 msgid "There is <strong>%{n} charging session</strong> at this location for which no costs have been added yet."
 msgid_plural "There are <strong>%{n} charging sessions</strong> at this location for which no costs have been added yet."
 msgstr[0] "Bu konumdaki <strong>%{n} şarj işlemi</strong> için henüz bir ücret yansıtılmadı."
 msgstr[1] "Bu konumdaki <strong>%{n} şarj işlemi</strong> için henüz bir ücret yansıtılmadı."
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:196
+#: lib/teslamate_web/live/geofence_live/form.html.heex:218
 #, elixir-autogen, elixir-format
 msgid "Add costs retroactively"
 msgstr "Tutarları geçmişe dönük olarak ekle"
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:174
+#: lib/teslamate_web/live/geofence_live/form.html.heex:196
 #, elixir-autogen, elixir-format
 msgid "Charging Costs"
 msgstr "Şarj Tutarları"
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:193
+#: lib/teslamate_web/live/geofence_live/form.html.heex:215
 #, elixir-autogen, elixir-format
 msgid "Continue"
 msgstr "Devam Et"
@@ -562,7 +562,7 @@ msgid "Trunk is open"
 msgstr "Bağaj açık"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:143
-#: lib/teslamate_web/live/geofence_live/form.html.heex:87
+#: lib/teslamate_web/live/geofence_live/form.html.heex:109
 #, elixir-autogen, elixir-format
 msgid "Per Minute"
 msgstr "Dakika Başına"
@@ -956,3 +956,18 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgid "Sign in failed, see the logs for details"
 msgstr ""
+
+#: lib/teslamate_web/live/geofence_live/form.html.heex:89
+#, elixir-autogen, elixir-format
+msgid "Hide addresses in Locations and route points in Trip, Visited and Drive Details. The underlying location data remains stored."
+msgstr "Locations içindeki adresleri ve Trip, Visited ile Drive Details içindeki rota noktalarını gizler. Temel konum verileri saklanmaya devam eder."
+
+#: lib/teslamate_web/live/geofence_live/form.html.heex:86
+#, elixir-autogen, elixir-format
+msgid "Hide location details"
+msgstr "Konum ayrıntılarını gizle"
+
+#: lib/teslamate_web/live/geofence_live/form.html.heex:77
+#, elixir-autogen, elixir-format
+msgid "Visibility"
+msgstr "Görünürlük"

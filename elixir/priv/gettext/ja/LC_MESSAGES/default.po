@@ -129,7 +129,7 @@ msgid "Units"
 msgstr "単位"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:168
-#: lib/teslamate_web/live/geofence_live/form.html.heex:143
+#: lib/teslamate_web/live/geofence_live/form.html.heex:165
 #, elixir-autogen, elixir-format
 msgid "Back"
 msgstr "戻る"
@@ -172,13 +172,13 @@ msgid "Radius"
 msgstr "半径"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:172
-#: lib/teslamate_web/live/geofence_live/form.html.heex:147
+#: lib/teslamate_web/live/geofence_live/form.html.heex:169
 #, elixir-autogen, elixir-format
 msgid "Save"
 msgstr "保存"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:173
-#: lib/teslamate_web/live/geofence_live/form.html.heex:148
+#: lib/teslamate_web/live/geofence_live/form.html.heex:170
 #: lib/teslamate_web/live/signin_live/index.html.heex:85
 #, elixir-autogen, elixir-format
 msgid "Saving..."
@@ -403,7 +403,7 @@ msgid "Charge Cost"
 msgstr "充電コスト"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:134
-#: lib/teslamate_web/live/geofence_live/form.html.heex:78
+#: lib/teslamate_web/live/geofence_live/form.html.heex:100
 #, elixir-autogen, elixir-format
 msgid "Cost"
 msgstr "コスト"
@@ -482,7 +482,7 @@ msgstr "無料スーパーチャージ中"
 msgid "General Settings"
 msgstr "一般設定"
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:110
+#: lib/teslamate_web/live/geofence_live/form.html.heex:132
 #, elixir-autogen, elixir-format
 msgid "Session fee"
 msgstr "セッション費用"
@@ -493,7 +493,7 @@ msgid "Doors open"
 msgstr "ドアが開いています"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:142
-#: lib/teslamate_web/live/geofence_live/form.html.heex:86
+#: lib/teslamate_web/live/geofence_live/form.html.heex:108
 #, elixir-autogen, elixir-format
 msgid "Per kWh"
 msgstr "kWh毎"
@@ -503,24 +503,24 @@ msgstr "kWh毎"
 msgid "Total"
 msgstr "合計"
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:182
+#: lib/teslamate_web/live/geofence_live/form.html.heex:204
 #, elixir-format, elixir-autogen
 msgid "There is <strong>%{n} charging session</strong> at this location for which no costs have been added yet."
 msgid_plural "There are <strong>%{n} charging sessions</strong> at this location for which no costs have been added yet."
 msgstr[0] "この場所には、<strong>まだ費用が追加されていない%{n}つの課金セッション</strong>があります。"
 msgstr[1] "この場所には、<strong>まだ費用が追加されていない%{n}つの課金セッション</strong>があります。"
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:196
+#: lib/teslamate_web/live/geofence_live/form.html.heex:218
 #, elixir-autogen, elixir-format
 msgid "Add costs retroactively"
 msgstr "さかのぼってにコストを追加する"
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:174
+#: lib/teslamate_web/live/geofence_live/form.html.heex:196
 #, elixir-autogen, elixir-format
 msgid "Charging Costs"
 msgstr "充電費用"
 
-#: lib/teslamate_web/live/geofence_live/form.html.heex:193
+#: lib/teslamate_web/live/geofence_live/form.html.heex:215
 #, elixir-autogen, elixir-format
 msgid "Continue"
 msgstr "続ける"
@@ -562,7 +562,7 @@ msgid "Trunk is open"
 msgstr "トランクが開いています"
 
 #: lib/teslamate_web/live/charge_live/cost.html.heex:143
-#: lib/teslamate_web/live/geofence_live/form.html.heex:87
+#: lib/teslamate_web/live/geofence_live/form.html.heex:109
 #, elixir-autogen, elixir-format
 msgid "Per Minute"
 msgstr "毎分"
@@ -955,3 +955,18 @@ msgstr ""
 #, elixir-autogen, elixir-format
 msgid "Sign in failed, see the logs for details"
 msgstr ""
+
+#: lib/teslamate_web/live/geofence_live/form.html.heex:89
+#, elixir-autogen, elixir-format
+msgid "Hide addresses in Locations and route points in Trip, Visited and Drive Details. The underlying location data remains stored."
+msgstr "Locationsの住所とTrip、Visited、Drive Detailsの経路点を非表示にする。元の位置データは保存される。"
+
+#: lib/teslamate_web/live/geofence_live/form.html.heex:86
+#, elixir-autogen, elixir-format
+msgid "Hide location details"
+msgstr "位置情報の詳細を非表示"
+
+#: lib/teslamate_web/live/geofence_live/form.html.heex:77
+#, elixir-autogen, elixir-format
+msgid "Visibility"
+msgstr "表示"
