@@ -754,7 +754,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  date_trunc('minute', timezone('UTC', date), '$__timezone') AS time,\n  avg(latitude) AS latitude,\n  avg(longitude) AS longitude\nFROM positions\nWHERE car_id = $car_id AND $__timeFilter(date) AND ideal_battery_range_km IS NOT NULL\nGROUP BY 1\nORDER BY 1",
+          "rawSql": "SELECT\n  date_trunc('minute', timezone('UTC', p.date), '$__timezone') AS time,\n  avg(p.latitude) AS latitude,\n  avg(p.longitude) AS longitude\nFROM positions p\nWHERE p.car_id = $car_id AND $__timeFilter(p.date) AND p.ideal_battery_range_km IS NOT NULL\n  -- Hide location details inside selected geo-fences\n  AND NOT EXISTS (\n    SELECT 1\n    FROM geofences g\n    WHERE g.hide_details\n      AND earth_box(ll_to_earth(g.latitude, g.longitude), g.radius)\n          @> ll_to_earth(p.latitude, p.longitude)\n      AND earth_distance(\n            ll_to_earth(g.latitude, g.longitude),\n            ll_to_earth(p.latitude, p.longitude)\n          ) < g.radius\n  )\nGROUP BY 1\nORDER BY 1",
           "refId": "Positions"
         },
         {
