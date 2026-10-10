@@ -6,7 +6,7 @@ updates:
       interval: "monthly"
     # Dependabot counts whole days, so 5 keeps the 4-day Hex cooldown in elixir/mix.exs.
     cooldown:
-      default-days: 5
+      default-days: 5 # zizmor: ignore[dependabot-cooldown] Dependabot counts whole days, so 5 keeps the 96-hour minimum package age
 
   - package-ecosystem: "npm"
     directory: "/elixir/assets"
@@ -14,7 +14,7 @@ updates:
       interval: "monthly"
     # Dependabot counts whole days, so 5 keeps the 4-day npm cooldown in elixir/assets/.npmrc.
     cooldown:
-      default-days: 5
+      default-days: 5 # zizmor: ignore[dependabot-cooldown] Dependabot counts whole days, so 5 keeps the 96-hour minimum package age
     ignore:
       # ignore the path based dependencies to prevent "Dependabot couldn't fetch all your path-based dependencies"
       - dependency-name: phoenix
@@ -27,7 +27,7 @@ updates:
       interval: "monthly"
     # Dependabot counts whole days, so 5 keeps the 4-day npm cooldown in website/.npmrc.
     cooldown:
-      default-days: 5
+      default-days: 5 # zizmor: ignore[dependabot-cooldown] Dependabot counts whole days, so 5 keeps the 96-hour minimum package age
 
   - package-ecosystem: "cargo"
     directory: "/rust"
@@ -38,16 +38,22 @@ updates:
         patterns:
           - "opentelemetry*"
           - "tracing-opentelemetry"
+    cooldown:
+      default-days: 5 # zizmor: ignore[dependabot-cooldown] Dependabot counts whole days, so 5 keeps the 96-hour minimum package age
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 5 # zizmor: ignore[dependabot-cooldown] Dependabot counts whole days, so 5 keeps the 96-hour minimum package age
 
   - package-ecosystem: "docker"
     directory: "/grafana"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 5 # zizmor: ignore[dependabot-cooldown] Dependabot counts whole days, so 5 keeps the 96-hour minimum package age
 
   - package-ecosystem: "github-actions"
     directories:
@@ -59,3 +65,8 @@ updates:
           - "*"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 5 # zizmor: ignore[dependabot-cooldown] Dependabot counts whole days, so 5 keeps the 96-hour minimum package age
+      # Own actions are exempt from the cooldown.
+      exclude:
+        - "rewse/*"
