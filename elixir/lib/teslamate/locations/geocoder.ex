@@ -147,7 +147,7 @@ defmodule TeslaMate.Locations.Geocoder do
       city: raw["address"] |> get_first(@city_labels),
       county: raw["address"] |> get_first(@county_labels),
       postcode: get_in(raw, ["address", "postcode"]),
-      state: raw["address"] |> get_first(@state_labels),
+      state: get_first(raw["address"], @state_labels) || state_from_display_name(raw),
       state_district: get_in(raw, ["address", "state_district"]),
       country: get_in(raw, ["address", "country"]),
       raw: raw
@@ -155,6 +155,27 @@ defmodule TeslaMate.Locations.Geocoder do
 
     {:ok, address}
   end
+
+  # Nominatim keeps one value per label in "address", so a first-level
+  # subdivision whose label repeats that of a more specific part is left out
+  # of it and appears only in display_name: Tokyo is linked to a place=city
+  # node, and its ward holds "city". Inside a subdivision with an ISO 3166-2
+  # code, the last display_name part that no address label holds is that
+  # subdivision.
+  defp state_from_display_name(%{
+         "address" => %{"ISO3166-2-lvl4" => _} = address,
+         "display_name" => display_name
+       })
+       when is_binary(display_name) do
+    values = Map.values(address)
+
+    display_name
+    |> String.split(", ")
+    |> Enum.reject(&(&1 in values))
+    |> List.last()
+  end
+
+  defp state_from_display_name(_raw), do: nil
 
   defp get_first(nil, _labels), do: nil
   defp get_first(_address, []), do: nil
