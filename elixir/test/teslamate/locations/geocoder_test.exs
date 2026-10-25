@@ -2,6 +2,7 @@ defmodule TeslaMate.Locations.GeocoderTest do
   use ExUnit.Case, async: false
 
   alias TeslaMate.Locations.Geocoder
+  alias TeslaMate.Locations.Address
 
   import Mock
 
@@ -736,6 +737,150 @@ defmodule TeslaMate.Locations.GeocoderTest do
         address = unquote(Macro.escape(address))
         assert Map.take(address_fields(address), @field_names) == unquote(Macro.escape(fields))
       end
+    end
+  end
+
+  describe "missing state" do
+    # Reverse lookup near the Tokyo Metropolitan Government Building on
+    # nominatim.openstreetmap.org (Accept-Language: en). Tokyo appears only in
+    # display_name because Nominatim labels it "city", which Shinjuku holds.
+    @shinjuku %{
+      "address" => %{
+        "amenity" => "Tokyo Metropolitan Office of Postal Service",
+        "city" => "Shinjuku",
+        "country" => "Japan",
+        "country_code" => "jp",
+        "ISO3166-2-lvl4" => "JP-13",
+        "neighbourhood" => "Nishi-Shinjuku 2",
+        "postcode" => "160-0023",
+        "quarter" => "Nishi-Shinjuku",
+        "road" => "Tocho-dori Ave."
+      },
+      "display_name" =>
+        "Tokyo Metropolitan Office of Postal Service, Tocho-dori Ave., Nishi-Shinjuku 2, Nishi-Shinjuku, Shinjuku, Tokyo, 160-0023, Japan",
+      "osm_id" => 1_420_785_352,
+      "osm_type" => "node"
+    }
+
+    setup_with_mocks([
+      {Tesla.Adapter.Finch, [],
+       call: fn %Tesla.Env{} = env, _opts ->
+         {:ok, %Tesla.Env{env | status: 200, body: Process.get(:body)}}
+       end}
+    ]) do
+      :ok
+    end
+
+    defp state_of(body) do
+      Process.put(:body, body)
+      {:ok, %{state: state}} = Geocoder.reverse_lookup(0.0, 0.0)
+      state
+    end
+
+    test "fills the state from display_name inside a first-level subdivision" do
+      assert state_of(@shinjuku) == "Tokyo"
+    end
+
+    test "ignores unlisted display_name parts before the subdivision" do
+      body = Map.update!(@shinjuku, "display_name", &("Unlisted Place, " <> &1))
+      assert state_of(body) == "Tokyo"
+    end
+
+    test "fills the state in details" do
+      Process.put(:body, [@shinjuku])
+
+      assert {:ok, [%{state: "Tokyo", city: "Shinjuku"}]} =
+               Geocoder.details([%Address{osm_id: 1_420_785_352, osm_type: "node"}], "en")
+    end
+
+    test "keeps the state from the address labels" do
+      body = %{
+        "address" => %{
+          "city" => "Osaka",
+          "country" => "Japan",
+          "ISO3166-2-lvl4" => "JP-27",
+          "postcode" => "530-0001",
+          "province" => "Osaka Prefecture"
+        },
+        "display_name" => "Unlisted Place, Osaka, Osaka Prefecture, 530-0001, Japan"
+      }
+
+      assert state_of(body) == "Osaka Prefecture"
+    end
+
+    test "keeps the state nil without a first-level subdivision code" do
+      body = %{
+        "address" => %{"city" => "Shinjuku", "country" => "Japan"},
+        "display_name" => "Shinjuku, Tokyo, Japan"
+      }
+
+      assert state_of(body) == nil
+    end
+
+    test "keeps the state nil when every display_name part is an address value" do
+      body = %{
+        "address" => %{
+          "city" => "Berlin",
+          "country" => "Germany",
+          "ISO3166-2-lvl4" => "DE-BE",
+          "postcode" => "10178",
+          "suburb" => "Mitte"
+        },
+        "display_name" => "Mitte, Berlin, 10178, Germany"
+      }
+
+      assert state_of(body) == nil
+    end
+
+    # Reverse lookup at Stephansplatz, Vienna, on nominatim.openstreetmap.org
+    # (Accept-Language: en). The cadastral community is missing from address
+    # because the district holds "suburb", while Vienna stays in it as "city".
+    test "keeps the state nil when the unlisted part is not the subdivision" do
+      body = %{
+        "address" => %{
+          "city" => "Vienna",
+          "country" => "Austria",
+          "country_code" => "at",
+          "house_number" => "3",
+          "ISO3166-2-lvl4" => "AT-9",
+          "neighbourhood" => "Stubenviertel",
+          "postcode" => "1010",
+          "road" => "Stephansplatz",
+          "suburb" => "Innere Stadt"
+        },
+        "display_name" =>
+          "3, Stephansplatz, Stubenviertel, Katastralgemeinde Innere Stadt, Innere Stadt, Vienna, 1010, Austria"
+      }
+
+      assert state_of(body) == nil
+    end
+
+    # Reverse lookup at Taipei Main Station on nominatim.openstreetmap.org
+    # (Accept-Language: en). The road name contains the display_name separator.
+    test "keeps the state nil when an address value contains a comma" do
+      body = %{
+        "address" => %{
+          "amenity" => "臺鐵",
+          "city" => "Taipei",
+          "country" => "Taiwan",
+          "country_code" => "tw",
+          "ISO3166-2-lvl4" => "TW-TPE",
+          "neighbourhood" => "Liming Village",
+          "postcode" => "10041",
+          "road" => "Section 1, Chengde Road",
+          "suburb" => "Zhongzheng District",
+          "village" => "Station Front"
+        },
+        "display_name" =>
+          "臺鐵, Section 1, Chengde Road, Liming Village, Zhongzheng District, Station Front, Taipei, 10041, Taiwan"
+      }
+
+      assert state_of(body) == nil
+    end
+
+    test "keeps the state nil without display_name or address" do
+      assert state_of(Map.delete(@shinjuku, "display_name")) == nil
+      assert state_of(Map.delete(@shinjuku, "address")) == nil
     end
   end
 end
