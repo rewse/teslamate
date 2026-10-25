@@ -781,7 +781,7 @@ defmodule TeslaMate.Locations.GeocoderTest do
       assert state_of(@shinjuku) == "Tokyo"
     end
 
-    test "fills the state from the last display_name part no address label holds" do
+    test "ignores unlisted display_name parts before the subdivision" do
       body = Map.update!(@shinjuku, "display_name", &("Unlisted Place, " <> &1))
       assert state_of(body) == "Tokyo"
     end
@@ -827,6 +827,52 @@ defmodule TeslaMate.Locations.GeocoderTest do
           "suburb" => "Mitte"
         },
         "display_name" => "Mitte, Berlin, 10178, Germany"
+      }
+
+      assert state_of(body) == nil
+    end
+
+    # Reverse lookup at Stephansplatz, Vienna, on nominatim.openstreetmap.org
+    # (Accept-Language: en). The cadastral community is missing from address
+    # because the district holds "suburb", while Vienna stays in it as "city".
+    test "keeps the state nil when the unlisted part is not the subdivision" do
+      body = %{
+        "address" => %{
+          "city" => "Vienna",
+          "country" => "Austria",
+          "country_code" => "at",
+          "house_number" => "3",
+          "ISO3166-2-lvl4" => "AT-9",
+          "neighbourhood" => "Stubenviertel",
+          "postcode" => "1010",
+          "road" => "Stephansplatz",
+          "suburb" => "Innere Stadt"
+        },
+        "display_name" =>
+          "3, Stephansplatz, Stubenviertel, Katastralgemeinde Innere Stadt, Innere Stadt, Vienna, 1010, Austria"
+      }
+
+      assert state_of(body) == nil
+    end
+
+    # Reverse lookup at Taipei Main Station on nominatim.openstreetmap.org
+    # (Accept-Language: en). The road name contains the display_name separator.
+    test "keeps the state nil when an address value contains a comma" do
+      body = %{
+        "address" => %{
+          "amenity" => "臺鐵",
+          "city" => "Taipei",
+          "country" => "Taiwan",
+          "country_code" => "tw",
+          "ISO3166-2-lvl4" => "TW-TPE",
+          "neighbourhood" => "Liming Village",
+          "postcode" => "10041",
+          "road" => "Section 1, Chengde Road",
+          "suburb" => "Zhongzheng District",
+          "village" => "Station Front"
+        },
+        "display_name" =>
+          "臺鐵, Section 1, Chengde Road, Liming Village, Zhongzheng District, Station Front, Taipei, 10041, Taiwan"
       }
 
       assert state_of(body) == nil
