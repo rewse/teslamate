@@ -32,10 +32,12 @@
 ### Task 1: `display_name` から state を補う
 
 **Files:**
+
 - Modify: `elixir/lib/teslamate/locations/geocoder.ex`（`into_address/1` の `state:` 行と、その下に private 関数を追加）
 - Test: `elixir/test/teslamate/locations/geocoder_test.exs`（先頭に alias、末尾に `describe "missing state"` を追加）
 
 **Interfaces:**
+
 - Consumes: なし
 - Produces: `defp state_from_display_name(raw :: map()) :: String.t() | nil`。`into_address/1` の中で `state: get_first(raw["address"], @state_labels) || state_from_display_name(raw)` として使う。公開 API（`reverse_lookup/3`、`details/2` の戻り値の形）は変えない
 
@@ -184,6 +186,7 @@ git commit -m "fix(geocoder): fill a missing state from display_name"
 **Files:** なし（GitHub、GHCR、本番ホストでの操作）
 
 **Interfaces:**
+
 - Consumes: Task 1 の commit を含むブランチ `fix/geocoder-missing-state`
 - Produces: 本番の東京都の住所に state が入った状態
 
