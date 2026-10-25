@@ -1,3 +1,7 @@
+[default]
+# ISO 3166-2 code of Taipei in Nominatim fixtures
+extend-ignore-re = ["TW-TPE"]
+
 [default.extend-words]
 mosquitto = "mosquitto"
 HASS = "HASS"
