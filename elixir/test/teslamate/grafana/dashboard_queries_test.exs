@@ -7,7 +7,7 @@ defmodule TeslaMate.Grafana.DashboardQueriesTest do
     "internal/drive-details.json" => 1,
     "locations.json" => 1,
     "trip.json" => 1,
-    "visited.json" => 1
+    "visited.json" => 4
   }
   @query_keys ~w(definition query rawSql)
 
@@ -27,7 +27,22 @@ defmodule TeslaMate.Grafana.DashboardQueriesTest do
   # starts with a wider type is safe.
   @uncast_smallint_product ~r/(?<!\* )(?:\w+\.)?charger_actual_current \* (?:\w+\.)?charger_voltage/
 
-  test "location privacy filter is limited to four detail queries" do
+  test "every Visited query that reads addresses hides those inside selected geofences" do
+    address_queries =
+      dashboard_queries(Path.join(@dashboard_directory, "visited.json"))
+      |> Enum.map(fn {_path, query} -> normalize(query) end)
+      |> Enum.filter(&(&1 =~ ~r/\b(?:from|join) addresses\b/))
+
+    assert length(address_queries) == 3
+
+    for query <- address_queries do
+      assert String.contains?(query, @location_privacy_marker)
+      assert query =~ "@> ll_to_earth(a.latitude, a.longitude)"
+      assert query =~ "ll_to_earth(a.latitude, a.longitude) ) < g.radius"
+    end
+  end
+
+  test "location privacy filter is limited to the detail queries" do
     matches =
       dashboard_directory_queries()
       |> Enum.filter(fn {_path, query} ->
