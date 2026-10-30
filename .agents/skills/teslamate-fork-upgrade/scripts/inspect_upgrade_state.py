@@ -92,6 +92,8 @@ def discarded_parents(repo: Path, base: str) -> list[str]:
     A previous upgrade records the old fork history with an `-s ours` merge, so
     the merge tree equals one parent and the other parent's commits are
     superseded by their reapplied versions. Those commits are not live deltas.
+    A `--no-ff` pull request merge also has the tree of its branch parent, but
+    there the other parent is an ancestor of that branch, so nothing is discarded.
     """
     discarded: list[str] = []
     for line in git(repo, "rev-list", "--merges", "--parents", f"{base}..origin/main").splitlines():
@@ -99,8 +101,23 @@ def discarded_parents(repo: Path, base: str) -> list[str]:
         tree = git(repo, "rev-parse", f"{merge}^{{tree}}")
         kept = [p for p in parents if git(repo, "rev-parse", f"{p}^{{tree}}") == tree]
         if kept:
-            discarded += [p for p in parents if p not in kept]
+            discarded += [
+                p
+                for p in parents
+                if p not in kept and not any(is_ancestor(repo, p, k) for k in kept)
+            ]
     return discarded
+
+
+def is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
+    result = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=repo,
+        capture_output=True,
+    )
+    if result.returncode not in (0, 1):
+        raise RuntimeError(result.stderr.decode().strip())
+    return result.returncode == 0
 
 
 def custom_commits(repo: Path, base: str) -> list[dict[str, Any]]:
