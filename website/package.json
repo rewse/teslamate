@@ -15,15 +15,15 @@
     "@docusaurus/plugin-client-redirects": "^3.10.2",
     "@docusaurus/preset-classic": "^3.10.2",
     "classnames": "^2.5.1",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "overrides": {
     "serialize-javascript": "^7.0.5",
     "webpackbar": "^7.0.0",
     "uuid": "^14.0.0",
     "ws": "^8.21.0",
-    "joi": "^17.13.7"
+    "joi": "^17.13.8"
   },
   "browserslist": {
     "production": [

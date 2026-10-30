@@ -1,9 +1,12 @@
 defmodule TeslaMateWeb.ChargeLive.Cost do
   use TeslaMateWeb, :live_view
 
+  import TeslaMateWeb.MapComponents
+
   alias TeslaMate.Locations.{GeoFence, Address}
   alias TeslaMate.Log.ChargingProcess
   alias TeslaMate.Log
+  alias TeslaMateWeb.CarTitle
 
   use Gettext, backend: TeslaMateWeb.Gettext
 

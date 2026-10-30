@@ -116,6 +116,17 @@ defmodule TeslaMateWeb.ChargeLive.CostTest do
                |> Floki.find("#car-tag")
     end
 
+    test "shows the VIN of a car without a name", %{conn: conn} do
+      car = car_fixture(name: nil, vin: "5YJ3E1EA1KF000001")
+      %ChargingProcess{id: id} = charging_process_fixture(car)
+      assert {:ok, _view, html} = live(conn, "/charge-cost/#{id}")
+
+      assert html
+             |> Floki.parse_document!()
+             |> Floki.find("#car-tag")
+             |> Floki.text() == "VIN 5YJ3E1EA1KF000001"
+    end
+
     test "shows the geo-fence name", %{conn: conn} do
       {:ok, geofence} =
         Locations.create_geofence(%{
@@ -315,6 +326,16 @@ defmodule TeslaMateWeb.ChargeLive.CostTest do
 
       assert ["1.50"] = html |> Floki.find("#charging_process_cost") |> Floki.attribute("value")
       assert %ChargingProcess{cost: decimal("1.50")} = Repo.get(ChargingProcess, id)
+    end
+  end
+
+  describe "map" do
+    test "preconnects to the tile server", %{conn: conn} do
+      %ChargingProcess{id: id} = charging_process_fixture(car_fixture())
+
+      assert {:ok, _view, html} = live(conn, "/charge-cost/#{id}")
+
+      TestHelper.assert_tile_preconnect(html)
     end
   end
 

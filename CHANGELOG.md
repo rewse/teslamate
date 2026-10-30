@@ -1,5 +1,104 @@
 # Changelog
 
+## [4.4.0] - 2026-10-23
+
+The certificate authority eMudhra generated the private keys of eight of its intermediate CAs incorrectly, so anyone can recover them from the certificates ([incident report](https://bugzilla.mozilla.org/show_bug.cgi?id=2083449)). TeslaMate no longer trusts these CAs, so they cannot be used to impersonate the Tesla streaming API or your MQTT broker (#5882).
+The Docker image now ships the CA certificates, so time zone updates download again (#5808), and we use the latest Grafana (13.2.4) with its security fixes.
+
+While driving, the car summary and MQTT now show the newest value of stream and poll, so values such as the odometer no longer step back and Home Assistant no longer logs "state is not strictly increasing".
+The Visited dashboard lists the countries and cities each car stopped or charged in, with a day-by-day view per city, and the Temperatures dashboard shows averages over the selected range instead of empty tiles. The charging dashboards label the charger values as AC input and hide them during DC fast charging, and the SuC Charging Cost panel classifies each session by all of its charges, not only the last one.
+Creating, changing or deleting a geofence now re-assigns drives and charges by their actual distance from it, and changing only a geofence's name or costs no longer re-assigns them at all, so saving no longer times out on large databases.
+Maps appear sooner and on phones the footer stays clear of the system gesture area.
+
+**Note for MQTT users:** A value the car reports as missing is now published as an empty [MQTT topic](https://docs.teslamate.org/docs/integrations/mqtt#mqtt-topics), e.g. `speed` and `shift_state` once the car is switched off; before, the last value stayed. The car summary in the web UI shows it empty as well. A topic the car has not reported since TeslaMate started is no longer cleared, so its retained value stays. While TeslaMate runs, the `odometer` never decreases and is never published empty.
+
+To make your TeslaMate experience even better, we have made 68 improvements.
+
+Enjoy!
+
+### Improvements and bug fixes
+
+- feat: use Grafana 13.2.3 (#5803 - @swiffer)
+- fix(docker): install the CA certificates, so Tzdata can verify TLS and download time zone updates (#5808 - @JakobLichterfeld)
+- fix: use the position's latitude when re-assigning drives and charges to geofences (#5820 - @JakobLichterfeld)
+- fix: re-assign drives and charges only when a geofence's location or radius changes (#5823 - @JakobLichterfeld)
+- perf(web): connect to the map tile server early, so maps appear sooner (#5826 - @JakobLichterfeld)
+- fix(web): label cars without a name by their VIN in the settings, like the car summary (#5821 - @TUNER88)
+- fix(web): label cars without a name by their VIN on the charge cost page and in the vehicle reload hint, like the car summary (#5827 - @JakobLichterfeld)
+- fix(vehicle): show the newest value of stream and poll in the car summary and on MQTT, so values such as the odometer no longer step back while driving (#5864 - @JakobLichterfeld)
+- feat: use Grafana 13.2.4 (#5883 - @JakobLichterfeld)
+- fix(web): keep the footer out of the phone's system gesture area and stop the page from scrolling past the screen on phones (#5884 - @JakobLichterfeld)
+
+#### Build, CI, internal
+
+- fix: read TeslaMate's version from one module so a VERSION bump cannot leave a stale copy (#5804 - @swiffer, @JakobLichterfeld)
+- build(deps): update flake.lock (#5822)
+- build(deps): bump localize from 1.2.0 to 1.3.0 in /elixir (#5811)
+- build(deps-dev): bump sass from 1.104.1 to 1.105.0 in /elixir/assets (#5812)
+- build(deps): bump @geoman-io/leaflet-geoman-free from 2.20.1 to 2.20.2 in /elixir/assets (#5813)
+- build(deps): bump phoenix from 1.8.14 to 1.8.15 in /elixir (#5814)
+- build(deps): bump tzdata from 1.2.1 to 1.2.2 in /elixir (#5815)
+- build(deps-dev): bump lazy_html from 0.1.12 to 0.1.13 in /elixir (#5816)
+- build(deps): bump crate-ci/typos from 1.50.2 to 1.50.3 in the actions-deps group across 1 directory (#5817)
+- build(deps): bump fast-uri from 3.1.7 to 3.1.8 in /website (#5824)
+- build(deps): bump brace-expansion from 1.1.18 to 1.1.21 in /website (#5825)
+- build(nix): add rustc and lldb to the devenv shell, so rust-analyzer finds the sysroot in every editor and Rust can be debugged (#5796 - @brianmay)
+- ci: run the Rust CI and the Nix hash check whenever one of their build inputs changes, not only rust/ and the mix files (#5828 - @JakobLichterfeld)
+- fix(nix): build with Erlang without wx and fetch the mix deps with the project's Elixir, which shrinks every Nix build by about 0.5 GiB (#5830 - @JakobLichterfeld)
+- ci: run the NixOS module test (#5829 - @JakobLichterfeld)
+- fix(ci): keep the flake.lock and Nix hash workflows out of the other jobs' caches (#5831 - @JakobLichterfeld)
+- feat(rust): add OpenTelemetry support, exporting logs, traces and metrics over OTLP ([aa563418](https://github.com/teslamate-org/teslamate/commit/aa5634188b369e4ca6402b4811c7c8a48bd658d7) - @brianmay)
+- refactor(rust): prefix the OTLP command line options with `otlp-` ([428eb491](https://github.com/teslamate-org/teslamate/commit/428eb491eea01852dbc5f9d45f08f2c05ccbe17f) - @brianmay)
+- fix(rust): make the OTLP configuration values optional ([a22cbcba](https://github.com/teslamate-org/teslamate/commit/a22cbcba9d7d53b297533e2f001997d0634b5ba7) - @brianmay)
+- refactor(rust): require endpoint, username and password as soon as one OTLP value is set ([bbc95ce1](https://github.com/teslamate-org/teslamate/commit/bbc95ce1f95da17f937fda65c60d1c0860db6df0) - @brianmay)
+- style(rust): fix the formatting ([057270c1](https://github.com/teslamate-org/teslamate/commit/057270c1938e0714164b77004ecb6e349436915a) - @brianmay)
+- build(deps): bump the opentelemetry-rust group across 1 directory with 6 updates (#5833)
+- refactor(rust): configure the OTLP export only through the standard OpenTelemetry environment variables, export each signal only when its endpoint is set, and drop the unused dependencies (#5835 - @JakobLichterfeld)
+- fix(db): align import_runs.car_id type with cars.id (smallint) (#5847 - @JakobLichterfeld)
+- refactor(db): rename the range enum to preferred_range (#5860 - @JakobLichterfeld)
+- build(deps): bump finch from 0.23.0 to 0.24.0 in /elixir (#5832)
+- build(deps): bump anchore/sbom-action from 0.24.2 to 0.24.3 in /.github/actions/build in the actions-deps group across 1 directory (#5834)
+- build(deps): bump tokio from 1.53.1 to 1.53.3 in /rust (#5836)
+- build(deps-dev): bump sass from 1.105.0 to 1.105.1 in /elixir/assets (#5837)
+- build(deps): bump source-map-js from 1.2.1 to 1.2.2 in /elixir/assets (#5838)
+- build(deps): bump proxy-addr from 2.0.7 to 2.0.8 in /website (#5839)
+- build(deps): bump source-map-js from 1.2.1 to 1.2.2 in /website (#5840)
+- build(deps): bump compression from 1.8.1 to 1.8.2 in /website (#5841)
+- build(deps): bump shell-quote from 1.10.0 to 1.12.0 in /website (#5842)
+- build(deps): bump joi from 17.13.7 to 17.13.8 in /website (#5843)
+- build(nix): drop x86_64-darwin, which devenv's nixpkgs no longer supports (#5879 - @JakobLichterfeld)
+- build(deps): update flake.lock (#5850)
+- build(nix): regenerate treefmt.toml for the updated treefmt-nix (#5850 - @JakobLichterfeld)
+- build(deps): bump follow-redirects from 1.16.0 to 1.16.1 in /website (#5876)
+- build(deps): bump launch-editor from 2.14.1 to 2.14.2 in /website (#5878)
+- build(deps): distrust the compromised eMudhra intermediate CAs (#5882 - @marsavela)
+- fix: update the gettext POT file for the moved layout lines ([06149aab](https://github.com/teslamate-org/teslamate/commit/06149aab33354102eeb53259176c3a01da99ad86) - @JakobLichterfeld)
+- fix: update the PO file references for the moved layout lines ([68ca04be](https://github.com/teslamate-org/teslamate/commit/68ca04be658aeda4288a205e26bdf6a2f31f23b3) - @JakobLichterfeld)
+- ci(typos): skip GitHub handles in Markdown, so contributor names never fail the spell check ([fbf78c1c](https://github.com/teslamate-org/teslamate/commit/fbf78c1c5e17cb219019a58d2d29afa3c7ae7e07) - @JakobLichterfeld)
+- build(deps): bump react and react-dom from 19.3.0 to 19.3.1 in /website (#5887)
+- build(deps): bump the actions-deps group across 3 directories with 6 updates (#5894)
+- build(deps): bump phoenix_live_view from 1.2.12 to 1.2.13 in /elixir (#5888)
+- build(deps): bump tesla from 1.21.3 to 1.22.0 in /elixir (#5890)
+- build(deps-dev): bump sass from 1.105.1 to 1.105.2 in /elixir/assets (#5889)
+- build(deps): bump the opentelemetry-rust group in /rust with 5 updates (#5892)
+
+#### Dashboards
+
+- feat(grafana): list the countries and cities each car stopped or charged in on the Visited dashboard, with a day-by-day view per city (#5859 - @jheredianet)
+- feat(grafana): replace the Temperatures dashboard's empty last-value tiles with averages over the selected range (#5858 - @jheredianet)
+- fix(grafana): classify sessions in the Charging Stats SuC Charging Cost panel by all their charges, not the last one (#5885 - @JakobLichterfeld)
+- fix(grafana): label charger values as AC input and hide them during DC fast charging (#5866 - @SomSamantray, @JakobLichterfeld)
+
+#### Translations
+
+- i18n(it): complete Italian web UI translations (#5875 - @SiNaPsEr0x)
+
+#### Documentation
+
+- docs(mqtt): describe the Home Assistant discovery cleanup on every start while discovery is disabled (#5845 - @JakobLichterfeld)
+- docs(home-assistant): use the binary_sensor domain for the parking brake entity id (#5861 - @Bascht74)
+- docs(install): require Elixir 1.19+ on Erlang/OTP 28+ in the manual install guides, install it with mise on Debian (#5877 - @JakobLichterfeld)
+
 ## [4.3.0] - 2026-09-29
 
 The vehicle display order can now be edited on the settings page, a new dashboard shows historical temperatures, and we use the latest Grafana (13.2.2).
@@ -3248,6 +3347,7 @@ New users need to sign in via the web interface.
 
 ## [1.0.0] - 2019-07-25
 
+[4.4.0]: https://github.com/teslamate-org/teslamate/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/teslamate-org/teslamate/compare/v4.2.0...v4.3.0
 [4.2.0]: https://github.com/teslamate-org/teslamate/compare/v4.1.1...v4.2.0
 [4.1.1]: https://github.com/teslamate-org/teslamate/compare/v4.1.0...v4.1.1

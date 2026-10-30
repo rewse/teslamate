@@ -1,10 +1,12 @@
 <div class="car card">
   <div class="card-image">
+    <.tile_preconnect />
     <figure
       id={"map_#{@car.id}_container"}
       data-id={@car.id}
       data-marker="arrow"
       data-zoom="1"
+      data-tile-layer={tile_layer()}
       phx-hook="SimpleMap"
       phx-update="ignore"
     >
@@ -37,7 +39,7 @@
   <div class="card-content">
     <div class="media is-flex mb-5">
       <div class="media-content">
-        <% {display_name, vin_label} = format_car_title(@summary.display_name, @car.vin) %>
+        <% {display_name, vin_label} = CarTitle.format(@summary.display_name, @car.vin) %>
         <p class="title is-5">
           <span
             class="has-tooltip-right has-tooltip-bottom-mobile"

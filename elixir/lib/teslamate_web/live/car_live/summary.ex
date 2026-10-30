@@ -1,11 +1,14 @@
 defmodule TeslaMateWeb.CarLive.Summary do
   use TeslaMateWeb, :live_view
 
+  import TeslaMateWeb.MapComponents
+
   use Gettext, backend: TeslaMateWeb.Gettext
 
   alias TeslaMate.Vehicles.Vehicle.Summary
   alias TeslaMate.Vehicles.Vehicle
   alias TeslaMate.{Vehicles, Convert}
+  alias TeslaMateWeb.CarTitle
 
   on_mount {TeslaMateWeb.InitAssigns, :locale}
 
@@ -130,15 +133,6 @@ defmodule TeslaMateWeb.CarLive.Summary do
   end
 
   def format_tpms(_, _), do: "—"
-
-  def format_car_title(display_name, vin) when display_name in [nil, ""] do
-    label = gettext("VIN %{vin}", vin: vin)
-    {label, label}
-  end
-
-  def format_car_title(display_name, vin) do
-    {display_name, gettext("VIN %{vin}", vin: String.slice(vin, -6, 6))}
-  end
 
   defp translate_state(:start), do: ""
   defp translate_state(:driving), do: gettext("driving")

@@ -262,6 +262,63 @@ defmodule TeslaMate.LocationsGeofencesTest do
       assert %ChargingProcess{geofence_id: ^geofence_id} = Repo.get(ChargingProcess, cproc_id)
     end
 
+    test "update_geofence/2 does not re-assign drives and charging processes if the location is unchanged" do
+      car = car_fixture()
+      position = %{latitude: 52.51500, longitude: 13.35100}
+
+      %ChargingProcess{id: cproc_id} = create_charging_process(car, position)
+      %Drive{id: drive_id} = create_drive(car, position, position)
+
+      assert {:ok, %GeoFence{id: geofence_id} = geofence} =
+               Locations.create_geofence(%{
+                 name: "foo",
+                 latitude: 52.514521,
+                 longitude: 13.350144,
+                 radius: 250
+               })
+
+      assert %Drive{start_geofence_id: ^geofence_id, end_geofence_id: ^geofence_id} =
+               Repo.get(Drive, drive_id)
+
+      assert %ChargingProcess{geofence_id: ^geofence_id} = Repo.get(ChargingProcess, cproc_id)
+
+      # Detach both, so that a re-assignment would become visible
+
+      Repo.get!(Drive, drive_id)
+      |> Ecto.Changeset.change(start_geofence_id: nil, end_geofence_id: nil)
+      |> Repo.update!()
+
+      Repo.get!(ChargingProcess, cproc_id)
+      |> Ecto.Changeset.change(geofence_id: nil)
+      |> Repo.update!()
+
+      # The form submits all fields, including the unchanged location
+
+      assert {:ok, %GeoFence{id: ^geofence_id, name: "bar"}} =
+               Locations.update_geofence(geofence, %{
+                 "name" => "bar",
+                 "latitude" => "52.514521",
+                 "longitude" => "13.350144",
+                 "radius" => "250",
+                 "billing_type" => "per_minute",
+                 "cost_per_unit" => "0.0079",
+                 "session_fee" => "5.0"
+               })
+
+      assert %Drive{start_geofence_id: nil, end_geofence_id: nil} = Repo.get(Drive, drive_id)
+      assert %ChargingProcess{geofence_id: nil} = Repo.get(ChargingProcess, cproc_id)
+    end
+
+    test "update_geofence/2 with invalid data and an unchanged location returns error changeset" do
+      geofence = geofence_fixture()
+
+      assert {:error, %Ecto.Changeset{} = changeset} =
+               Locations.update_geofence(geofence, %{session_fee: -0.01})
+
+      assert %{session_fee: ["must be greater than or equal to 0"]} = errors_on(changeset)
+      assert geofence == Locations.get_geofence!(geofence.id)
+    end
+
     test "delete_geofence/1 deletes the geofence" do
       geofence = geofence_fixture()
       assert {:ok, %GeoFence{}} = Locations.delete_geofence(geofence)
@@ -478,6 +535,80 @@ defmodule TeslaMate.LocationsGeofencesTest do
 
       assert %Drive{id: _drive_id, start_geofence_id: ^id, end_geofence_id: ^id} =
                create_drive(car, position, position)
+    end
+
+    test "ignores geo-fences whose bounding box but not radius contains the position" do
+      car = car_fixture()
+
+      # ~80 m north and ~80 m east of the center of "outer", i.e. ~113 m away from it
+      position = %{latitude: 52.500719, longitude: 13.40118}
+
+      assert %ChargingProcess{id: c_id, geofence_id: nil} = create_charging_process(car, position)
+
+      assert %Drive{id: d_id, start_geofence_id: nil, end_geofence_id: nil} =
+               create_drive(car, position, position)
+
+      {:ok, inner = %GeoFence{id: i_id}} =
+        Locations.create_geofence(%{
+          name: "inner",
+          latitude: 52.500719,
+          longitude: 13.40118,
+          radius: 50
+        })
+
+      {:ok, %GeoFence{}} =
+        Locations.create_geofence(%{
+          name: "outer",
+          latitude: 52.5,
+          longitude: 13.4,
+          radius: 100
+        })
+
+      assert %ChargingProcess{geofence_id: ^i_id} = Repo.get!(ChargingProcess, c_id)
+      assert %Drive{start_geofence_id: ^i_id, end_geofence_id: ^i_id} = Repo.get!(Drive, d_id)
+
+      # the position lies within the bounding box of "outer", but outside its radius
+
+      assert {:ok, %GeoFence{}} = Locations.delete_geofence(inner)
+      assert %ChargingProcess{geofence_id: nil} = Repo.get!(ChargingProcess, c_id)
+      assert %Drive{start_geofence_id: nil, end_geofence_id: nil} = Repo.get!(Drive, d_id)
+    end
+
+    test "assigns the geo-fence whose center is closest to the position" do
+      car = car_fixture()
+
+      position = %{latitude: 52.5, longitude: 13.4}
+
+      assert %ChargingProcess{id: c_id, geofence_id: nil} = create_charging_process(car, position)
+
+      assert %Drive{id: d_id, start_geofence_id: nil, end_geofence_id: nil} =
+               create_drive(car, position, position)
+
+      # ~90 m north of the position
+
+      {:ok, %GeoFence{id: n_id}} =
+        Locations.create_geofence(%{
+          name: "north",
+          latitude: 52.500808,
+          longitude: 13.4,
+          radius: 200
+        })
+
+      assert %ChargingProcess{geofence_id: ^n_id} = Repo.get!(ChargingProcess, c_id)
+      assert %Drive{start_geofence_id: ^n_id, end_geofence_id: ^n_id} = Repo.get!(Drive, d_id)
+
+      # ~50 m east of the position, so closer than "north", but with a larger east-west offset
+
+      {:ok, %GeoFence{id: e_id}} =
+        Locations.create_geofence(%{
+          name: "east",
+          latitude: 52.5,
+          longitude: 13.400738,
+          radius: 200
+        })
+
+      assert %ChargingProcess{geofence_id: ^e_id} = Repo.get!(ChargingProcess, c_id)
+      assert %Drive{start_geofence_id: ^e_id, end_geofence_id: ^e_id} = Repo.get!(Drive, d_id)
     end
   end
 

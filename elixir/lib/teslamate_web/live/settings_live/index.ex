@@ -5,7 +5,7 @@ defmodule TeslaMateWeb.SettingsLive.Index do
 
   alias TeslaMate.Settings.{GlobalSettings, CarSettings}
   alias TeslaMate.{Log, Settings, Updater, Api, Vehicles}
-  alias TeslaMateWeb.VehicleReload
+  alias TeslaMateWeb.{CarTitle, VehicleReload}
 
   on_mount {TeslaMateWeb.InitAssigns, :locale}
 
