@@ -1705,6 +1705,7 @@
         "refresh": 1,
         "regex": "",
         "regexApplyTo": "value",
+        "skipUrlSync": true,
         "type": "query"
       },
       {
@@ -1722,6 +1723,7 @@
         "refresh": 1,
         "regex": "",
         "regexApplyTo": "value",
+        "skipUrlSync": true,
         "type": "query"
       },
       {
@@ -1739,6 +1741,7 @@
         "refresh": 1,
         "regex": "",
         "regexApplyTo": "value",
+        "skipUrlSync": true,
         "type": "query"
       },
       {
@@ -1756,6 +1759,7 @@
         "refresh": 1,
         "regex": "",
         "regexApplyTo": "value",
+        "skipUrlSync": true,
         "type": "query"
       },
       {
@@ -1773,6 +1777,7 @@
         "refresh": 1,
         "regex": "",
         "regexApplyTo": "value",
+        "skipUrlSync": true,
         "type": "query"
       },
       {
@@ -1790,6 +1795,7 @@
         "refresh": 1,
         "regex": "",
         "regexApplyTo": "value",
+        "skipUrlSync": true,
         "type": "query"
       }
     ]
