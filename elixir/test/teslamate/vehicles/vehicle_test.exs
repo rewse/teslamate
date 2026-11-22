@@ -3,7 +3,7 @@ defmodule TeslaMate.Vehicles.VehicleTest do
 
   alias TeslaMate.Vehicles.Vehicle.Summary
   alias TeslaMate.Vehicles.Vehicle
-  alias TeslaMate.Log.{Car, Update}
+  alias TeslaMate.Log.{Car, Drive, Update}
 
   describe "starting" do
     test "does not fetch again after an import completes", %{test: name} do
@@ -360,12 +360,32 @@ defmodule TeslaMate.Vehicles.VehicleTest do
       assert_receive {:insert_position, drive, %{longitude: 0.1, speed: 8}}
       assert_receive {:pubsub, {:broadcast, _, _, %Summary{state: :driving}}}
       assert_receive {:insert_position, ^drive, %{longitude: 0.1, speed: 80}}
-      assert_receive {:close_drive, ^drive, []}
+      assert_receive {:close_drive, ^drive}
+      assert_drive_addresses_put()
       assert_receive {:"$websockex_cast", :disconnect}
 
       assert_receive {:pubsub, {:broadcast, _, _, %Summary{state: :start}}}
 
       refute_receive _
+    end
+
+    test "does not look up addresses of a drive deleted on closing", %{test: name} do
+      now_ts = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
+
+      events = [
+        {:ok, online_event(now_ts - 1)},
+        {:ok, drive_event(now_ts + 0, "D", 5)},
+        {:error, :vehicle_in_service}
+      ]
+
+      :ok = start_vehicle(name, events)
+
+      assert_receive {:start_drive, _car}
+      assert_receive {:close_drive, %Drive{}}
+      assert_receive {:pubsub, {:broadcast, _, _, %Summary{state: :start}}}
+
+      refute_received {:find_address, _, _}
+      refute_received {:update_drive, _, _}
     end
 
     @tag :capture_log
@@ -464,6 +484,86 @@ defmodule TeslaMate.Vehicles.VehicleTest do
       for _ <- 1..10 do
         assert %Summary{state: :online, healthy: true} = Vehicle.summary(name)
       end
+    end
+
+    for state <- ["asleep", "offline"], display_name <- [nil, ""] do
+      @tag :capture_log
+      test "keeps the display name if #{state} without vehicle data reports #{inspect(display_name)}",
+           %{test: name} do
+        now_ts = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
+        state = unquote(state)
+
+        events = [
+          {:ok, online_event(now_ts, display_name: "foo")},
+          {:error, :vehicle_unavailable},
+          {:get_vehicle,
+           {:ok, %TeslaApi.Vehicle{state: state, display_name: unquote(display_name)}}}
+        ]
+
+        :ok = start_vehicle(name, events)
+
+        assert_receive {:start_state, car, :online, date: _}
+        assert_receive {ApiMock, {:stream, 1000, _}}
+        assert_receive {:insert_position, ^car, %{}}
+
+        assert_receive {:pubsub,
+                        {:broadcast, _, _, %Summary{state: :online, display_name: "foo"}}}
+
+        state = String.to_existing_atom(state)
+        assert_receive {:start_state, ^car, ^state, [date: _]}
+        assert_receive {:"$websockex_cast", :disconnect}
+
+        assert_receive {:pubsub, {:broadcast, _, _, %Summary{state: ^state, display_name: "foo"}}}
+
+        refute_receive _
+      end
+    end
+
+    @tag :capture_log
+    test "shows the display name of an asleep response without vehicle data", %{test: name} do
+      now_ts = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
+
+      events = [
+        {:ok, online_event(now_ts, display_name: "foo")},
+        {:error, :vehicle_unavailable},
+        {:get_vehicle, {:ok, %TeslaApi.Vehicle{state: "asleep", display_name: "bar"}}}
+      ]
+
+      :ok = start_vehicle(name, events)
+
+      assert_receive {:start_state, car, :online, date: _}
+      assert_receive {ApiMock, {:stream, 1000, _}}
+      assert_receive {:insert_position, ^car, %{}}
+      assert_receive {:pubsub, {:broadcast, _, _, %Summary{state: :online, display_name: "foo"}}}
+
+      assert_receive {:start_state, ^car, :asleep, [date: _]}
+      assert_receive {:"$websockex_cast", :disconnect}
+      assert_receive {:pubsub, {:broadcast, _, _, %Summary{state: :asleep, display_name: "bar"}}}
+      # the observed name is broadcast once the response is handled
+      assert_receive {:pubsub, {:broadcast, _, _, %Summary{state: :start, display_name: "bar"}}}
+
+      refute_receive _
+    end
+
+    test "shows a blank display name of a poll with vehicle data", %{test: name} do
+      now_ts = DateTime.utc_now() |> DateTime.to_unix(:millisecond)
+
+      events = [
+        {:ok, online_event(now_ts, display_name: "foo")},
+        {:ok, online_event(now_ts + 1, display_name: nil)},
+        fn -> Process.sleep(10_000) end
+      ]
+
+      :ok = start_vehicle(name, events)
+
+      assert_receive {:start_state, car, :online, date: _}
+      assert_receive {ApiMock, {:stream, 1000, _}}
+      assert_receive {:insert_position, ^car, %{}}
+      assert_receive {:pubsub, {:broadcast, _, _, %Summary{state: :online, display_name: "foo"}}}
+
+      assert_receive {:pubsub, {:broadcast, _, _, %Summary{state: :online, display_name: nil}}}
+
+      refute_receive _
     end
   end
 

@@ -28,7 +28,7 @@ defmodule TeslaMate.MixProject do
 
   def cli do
     [
-      preferred_cli_env: [
+      preferred_envs: [
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.post": :test,
@@ -58,8 +58,7 @@ defmodule TeslaMate.MixProject do
       {:floki, "~> 0.38"},
       {:fuse, "~> 2.5"},
       {:gen_state_machine, "~> 3.0"},
-      # https://github.com/bitwalker/timex/pull/783
-      {:gettext, "~> 1.0", override: true},
+      {:gettext, "~> 1.0"},
       {:jason, "~> 1.4"},
       {:lazy_html, ">= 0.1.0", only: :test},
       {:localize, "~> 1.0"},
@@ -81,7 +80,7 @@ defmodule TeslaMate.MixProject do
       {:ranch, "~> 2.2"},
       {:srtm, "~> 0.9.0"},
       {:tesla, "~> 1.14"},
-      {:timex, "~> 3.7"},
+      {:timex, "~> 4.0"},
       {:tortoise311, "~> 0.12"},
       {:tzdata, "~> 1.1"},
       {:websockex, "~> 0.5"},
@@ -98,7 +97,12 @@ defmodule TeslaMate.MixProject do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       "assets.deploy": ["cmd --cd assets node scripts/build.js", "phx.digest"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test --no-start"],
-      ci: ["format --check-formatted", "deps.unlock --check-unused", "test --raise"]
+      ci: [
+        "format --check-formatted",
+        "deps.unlock --check-unused",
+        "gettext.extract --check-up-to-date",
+        "test --raise --warnings-as-errors"
+      ]
     ]
   end
 

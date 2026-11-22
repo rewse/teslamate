@@ -7,6 +7,7 @@ defmodule ApiMock do
       :events,
       :pending_vehicle_data,
       :receiver,
+      :vid,
       :vehicle,
       :last_served,
       :stub,
@@ -89,6 +90,27 @@ defmodule ApiMock do
     handle_call({action, id}, from, %State{state | events: events})
   end
 
+  # A repair (the Terrain pass that adds the missing elevation, or a manual
+  # fix such as closing a drive by hand) runs at the serve boundary through a
+  # proxy task, so a repair that never completes raises with a named timeout;
+  # it returns once the repair is over. It takes no part in the
+  # vehicle's calls, so a fetch arriving meanwhile waits for the parked one.
+  def handle_call(
+        {action, id},
+        from,
+        %State{events: [{:repair_delivery, repair} | events]} = state
+      )
+      when action in [:get_vehicle, :get_vehicle_with_state] do
+    proxy = Task.async(repair)
+
+    {:continue, state} =
+      await_proxy(proxy, "repair", %State{state | events: events}, nil, :ignore_fetch, fn
+        :ok, state, _last -> {:continue, state}
+      end)
+
+    handle_call({action, id}, from, state)
+  end
+
   # A declared user-action call (e.g. suspend_logging) is delivered at the
   # serve boundary through a proxy task: the vehicle's suspend handler calls
   # back into this mock synchronously (fetch_strict), so a blocking call from
@@ -148,8 +170,8 @@ defmodule ApiMock do
     end
   end
 
-  def handle_call({:stream, _vid, receiver} = event, _from, %State{} = state) do
-    {reply, state} = connect_stream(receiver, state, event)
+  def handle_call({:stream, _vid, _receiver} = event, _from, %State{} = state) do
+    {reply, state} = connect_stream(event, state)
     {:reply, reply, state}
   end
 
@@ -178,7 +200,7 @@ defmodule ApiMock do
   # (the reconnect handler waits up to 1 s for it). Mock-based tests keep the
   # test process as the stream pid and see the cast themselves. The connect
   # is shared by the regular handler above and the proxy loop (await_proxy/6).
-  defp connect_stream(receiver, %State{pid: pid} = state, event) do
+  defp connect_stream({:stream, vid, receiver} = event, %State{pid: pid} = state) do
     send(pid, {ApiMock, event})
 
     state =
@@ -190,7 +212,7 @@ defmodule ApiMock do
       end
 
     {{:ok, state.stub},
-     %State{state | receiver: receiver} |> note_interaction({:stream, :connect})}
+     %State{state | receiver: receiver, vid: vid} |> note_interaction({:stream, :connect})}
   end
 
   defp spawn_stub(mock), do: spawn(fn -> stub_loop(mock) end)
@@ -257,10 +279,10 @@ defmodule ApiMock do
             "place stream events after the API event that establishes the stream"
   end
 
-  defp deliver_stream(payload, %State{receiver: receiver, vehicle: vehicle} = state) do
+  defp deliver_stream(payload, %State{vehicle: vehicle} = state) do
     proxy =
       Task.async(fn ->
-        receiver.(payload)
+        push_stream(payload, state)
         :sys.get_state(vehicle)
         :ok
       end)
@@ -272,6 +294,25 @@ defmodule ApiMock do
       {:continue, state}
     end)
   end
+
+  # A frame enters through the production frame handler, which validates it
+  # before the receiver sees it, tagged with the id the vehicle connected
+  # with; a status control reaches the receiver as TeslaApi.Stream emits it.
+  # The handler arms its 30 s :timeout in the proxy, and for a garbled frame
+  # the replacement of the connection; the replay drives no stream timeout and
+  # no connection, so both are cancelled.
+  defp push_stream({:frame, value, _time}, %State{vid: vid, receiver: receiver}) do
+    msg = Jason.encode!(%{"msg_type" => "data:update", "tag" => "#{vid}", "value" => value})
+    stream = %TeslaApi.Stream.State{vehicle_id: vid, receiver: receiver}
+
+    {:ok, %TeslaApi.Stream.State{timer: timer, replace_timer: replace_timer}} =
+      TeslaApi.Stream.handle_frame({:text, msg}, stream)
+
+    for ref <- [timer, replace_timer], is_reference(ref), do: Process.cancel_timer(ref)
+  end
+
+  defp push_stream(control, %State{receiver: receiver}) when is_atom(control),
+    do: receiver.(control)
 
   defp deliver_call(_call, %State{vehicle: nil}) do
     raise "call deliveries require the :vehicle option on ApiMock — " <>
@@ -384,12 +425,12 @@ defmodule ApiMock do
         %State{} = state = state |> sync_stream() |> mark_served(event)
         await_proxy(proxy, label, advance_event(state), result, fetch, finish)
 
-      {:"$gen_call", from, {:stream, _vid, receiver} = event} ->
+      {:"$gen_call", from, {:stream, _vid, _receiver} = event} ->
         # The vehicle's synchronous stream connect inside the handler (a
         # settings toggle on, a reconnecting stream control): answered like
         # the regular handler and attributed to last_served — the serve
         # before the delivery.
-        {reply, state} = connect_stream(receiver, state, event)
+        {reply, state} = connect_stream(event, state)
         GenServer.reply(from, reply)
         await_proxy(proxy, label, state, last, fetch, finish)
 

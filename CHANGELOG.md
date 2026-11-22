@@ -1,5 +1,110 @@
 # Changelog
 
+## [4.5.0] - 2026-11-17
+
+TeslaMate now publishes the car's VIN over MQTT and shows it as the serial number in the Home Assistant device info, and we use the latest Grafana (13.3.1).
+
+Garbled data from Tesla's stream no longer makes MQTT and Home Assistant show wrong values, and TeslaMate then reconnects to the stream, so correct data arrives again sooner.
+Every drive now gets its elevation, ascent and descent, also when the stream stopped sending positions.
+Changing the address language with many stored addresses no longer crashes the settings page, and Battery Health averages your last 10 charges instead of jumping with each one.
+The Charge Level dashboard draws its moving percentiles several times faster, and looking up addresses or the terrain elevation no longer holds a database connection while waiting.
+
+To make your TeslaMate experience even better, we have made 74 improvements.
+
+Enjoy!
+
+### New features
+
+- feat(mqtt): publish the vehicle's VIN (#5950 - @DennisGarvey)
+
+### Improvements and bug fixes
+
+- fix(vehicle): keep showing the car's name while it is asleep, for cars whose name Tesla only reports while awake (#5917 - @JakobLichterfeld)
+- feat: use Grafana 13.3.0 (#5918 - @swiffer)
+- fix(vehicle): wait as long as Tesla asks after too many requests, also while driving (#5924 - @JakobLichterfeld)
+- fix(settings): no longer crash when changing the address language with many stored addresses (#5926 - @JakobLichterfeld)
+- fix(settings): show an error if refreshing the addresses fails, instead of crashing the page (#5926 - @JakobLichterfeld)
+- fix(settings): no longer show an old address refresh error after changing the language again (#5926 - @JakobLichterfeld)
+- fix(settings): changing the address language in two tabs at once leaves all addresses in the language chosen last (#5926 - @JakobLichterfeld)
+- fix(settings): show settings changed during an address refresh as saved (#5926 - @JakobLichterfeld)
+- fix(settings): changing other settings no longer shows the address refresh spinner (#5926 - @JakobLichterfeld)
+- fix(settings): pause before the first reverse geocoding too, as Nominatim's usage policy asks (#5926 - @JakobLichterfeld)
+- fix(vehicle): no longer hold a database connection while looking up the address at charging start (#5929 - @JakobLichterfeld)
+- fix(vehicle): no longer hold a database connection while looking up the addresses at the end of a drive (#5929 - @JakobLichterfeld)
+- fix(locations): space all requests to Nominatim for the whole app, as its usage policy asks (#5929 - @JakobLichterfeld)
+- fix(vehicle): record the elevation and the full ascent and descent of drives during which the stream stopped sending positions (#5940 - @JakobLichterfeld)
+- fix(terrain): add the missing elevation to every drive once it has ended, also to a drive closed by hand long after and, once after an import, to the imported drives, and update their ascent and descent (#5940 - @JakobLichterfeld)
+- fix(vehicle): no longer hold a database connection while looking up the terrain elevation, and no longer crash when that lookup is slow or not yet available (#5940 - @JakobLichterfeld)
+- fix(stream): ignore garbled data from Tesla's stream, which made MQTT and Home Assistant show the power as battery level, a coordinate as shift state and a wrong location (#5923 - @JakobLichterfeld)
+- feat(stream): log ignored garbled data from Tesla's stream at debug level (#5923 - @JakobLichterfeld)
+- fix(stream): reconnect to Tesla's stream when it sends garbled data, so that correct data can arrive again sooner (#5961 - @JakobLichterfeld)
+- fix(mqtt): publish whole-number values from 1000 (e.g. an odometer of 13000 km) and very small values as plain numbers instead of exponent notation like "1.3e4" (#5967 - @JakobLichterfeld)
+- feat: use Grafana 13.3.1 (#5968 - @JakobLichterfeld)
+- feat(mqtt): show the VIN as the serial number in the Home Assistant device info (#5966 - @DennisGarvey)
+- fix(locale): pick the language only from those TeslaMate is translated into, so that the locale "und" falls back to the default language (#5973 - @JakobLichterfeld)
+
+#### Build, CI, internal
+
+- sec(deps): add tinypool override to version 2.1.2 in /website (#5896 - @JakobLichterfeld)
+- sec(deps): add postcss-selector-parser override to version 7.1.6 in /website (#5897 - @JakobLichterfeld)
+- sec(deps): update qs to version 6.16.1 in /website (#5899 - @JakobLichterfeld)
+- sec(deps): update rustls to version 0.23.46 in /rust (#5900 - @JakobLichterfeld)
+- sec(deps): update webpack-dev-middleware to version 7.4.6 in /website (#5901 - @JakobLichterfeld)
+- fix(test): group the canonical_call clauses so the characterization harness compiles with warnings as errors (#5898 - @swiffer)
+- ci(elixir): compile the test env with warnings as errors so warnings in test/support fail the Elixir Test job (#5913 - @JakobLichterfeld)
+- build(deps): update flake.lock (#5904)
+- build(deps): bump fast-uri from 3.1.8 to 3.1.9 in /website (#5914)
+- build(deps): bump body-parser from 1.20.8 to 1.20.9 in /website (#5915)
+- test(settings): cover reverse geocoding, mismatches, failures and parallel language changes of the address refresh, without sleeping (#5926 - @JakobLichterfeld)
+- test(settings): wait for the update check instead of sleeping a second (#5926 - @JakobLichterfeld)
+- test(updater): wait for the update check before asserting its outcome (#5926 - @JakobLichterfeld)
+- test(locations): fail every test that geocodes while holding a database connection (#5929 - @JakobLichterfeld)
+- test(repair): cover the pacing of the address repair, without sleeping (#5929 - @JakobLichterfeld)
+- build(elixir): run mix ci in the test env with the same checks as CI, warnings as errors and the gettext check included (#5929 - @JakobLichterfeld)
+- test(vehicle): pin the elevation, ascent and descent of a drive whose stream stops sending positions in a characterization scenario (#5940 - @JakobLichterfeld)
+- test(vehicle): hold API events in the vehicle tests through one helper (#5940 - @JakobLichterfeld)
+- test(characterization): replay the Terrain repair end to end, also for a drive closed by hand long after a crash (#5940 - @JakobLichterfeld)
+- build(deps): bump the actions-deps group across 2 directories with 1 update (#5938)
+- build(deps): bump elixir from 1.20.3-otp-29 to 1.20.4-otp-29 (#5931)
+- build(deps): bump localize from 1.3.0 to 1.6.0 and localize_web from 1.1.0 to 1.3.0 in /elixir (#5933)
+- build(deps): bump @geoman-io/leaflet-geoman-free from 2.20.2 to 2.20.4 in /elixir/assets (#5935)
+- build(deps): bump tokio from 1.53.3 to 1.54.1 in /rust (#5934)
+- build(deps-dev): bump sass from 1.105.2 to 1.106.1 in /elixir/assets (#5936)
+- build(deps): bump follow-redirects from 1.16.1 to 1.16.2 in /website (#5946)
+- build(deps): bump joi from 17.13.8 to 17.13.9 in /website (#5947)
+- build(deps): update flake.lock (#5925)
+- test(characterization): replay stream frames through the stream client and cover garbled frames (#5923 - @JakobLichterfeld)
+- build(deps): update flake.lock (#5958)
+- test(characterization): compare the numbers in JSON MQTT payloads by their notation, so goldens pin it (#5967 - @JakobLichterfeld)
+- test(characterization): pin plain number notation for coordinates near the prime meridian and a whole-km odometer (#5967 - @JakobLichterfeld)
+- build(deps): bump tesla from 1.22.0 to 1.23.0 in /elixir (#5969)
+- build(deps-dev): bump dialyxir from 1.4.8 to 1.4.9 in /elixir (#5970)
+- build(deps): bump floki from 0.38.4 to 0.38.5 in /elixir (#5971)
+- build(deps-dev): bump sass from 1.106.1 to 1.108.1 in /elixir/assets (#5972)
+- build(deps): bump localize from 1.6.0 to 1.7.1 and localize_web from 1.3.0 to 1.3.1 in /elixir (#5973)
+- build(deps): bump @geoman-io/leaflet-geoman-free from 2.20.4 to 2.20.6 in /elixir/assets (#5974)
+- build(deps): bump the actions-deps group across 2 directories with 4 updates (#5976)
+- build(deps): bump timex from 3.7.13 to 4.0.0 in /elixir, remove override on gettext (#5977)
+- sec(deps): raise serialize-javascript override to version 7.1.3 in /website (#5978 - @JakobLichterfeld)
+- sec(deps): update ecto to version 3.14.3 in /elixir (#5979 - @JakobLichterfeld)
+
+#### Dashboards
+
+- perf(grafana): draw the Charge Level moving percentiles several times faster (#5930 - @Dulanic)
+- fix(grafana): the current usable capacity in Battery Health averages your last 10 charges instead of jumping with each one (#5943 - @Vihvila92)
+- feat(grafana): show capacity as % of Usable (new) in the Battery Capacity by Mileage tooltip (#5951 - @gaardiolor)
+- fix(grafana): keep Battery Health working when a custom capacity or range is empty or uses a decimal comma (#5953 - @JakobLichterfeld)
+- fix(grafana): open in-panel TeslaMate links in a new tab so they work when Grafana and TeslaMate share an origin (#5963 - @misenhower)
+
+#### Translations
+
+- i18n(zh_Hant): translate new web UI strings (#5932 - @occultsound)
+
+#### Documentation
+
+- docs(development): list the gettext check and warnings as errors among the checks mix ci runs (#5929 - @JakobLichterfeld)
+- docs: add Cybertruck to MQTT model values (#5954 - @DennisGarvey)
+
 ## [4.4.0] - 2026-10-23
 
 The certificate authority eMudhra generated the private keys of eight of its intermediate CAs incorrectly, so anyone can recover them from the certificates ([incident report](https://bugzilla.mozilla.org/show_bug.cgi?id=2083449)). TeslaMate no longer trusts these CAs, so they cannot be used to impersonate the Tesla streaming API or your MQTT broker (#5882).
@@ -3347,6 +3452,7 @@ New users need to sign in via the web interface.
 
 ## [1.0.0] - 2019-07-25
 
+[4.5.0]: https://github.com/teslamate-org/teslamate/compare/v4.4.0...v4.5.0
 [4.4.0]: https://github.com/teslamate-org/teslamate/compare/v4.3.0...v4.4.0
 [4.3.0]: https://github.com/teslamate-org/teslamate/compare/v4.2.0...v4.3.0
 [4.2.0]: https://github.com/teslamate-org/teslamate/compare/v4.1.1...v4.2.0
