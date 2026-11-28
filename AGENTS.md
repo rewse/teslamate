@@ -13,6 +13,10 @@ Do not adopt a release until it has been public for the minimum age below, and d
 
 When the user explicitly asks for a fork-only fix ahead of upstream, run Mix from `elixir/` inside the devenv shell (`direnv exec .`), check that every changed version meets the cooldown, then run `nix run .#update-nix-hashes` and commit the hash in `nix/flake-modules/package.nix` together with the lockfile.
 
+## Pull Requests
+
+Merge an upgrade pull request, which brings in an upstream release through the `teslamate-fork-upgrade` skill, with a merge commit, and merge every other pull request by squash. Squash and rebase both drop the upgrade's `-s ours` merge, which the skill reads to tell the fork's changes from upstream's.
+
 ## Production Data Access
 
 To read production data, load the global `teslamate` skill and follow it; it covers access, the read-only guarantees, and the schema. Change production dashboards through this repository, a new image, and the Ansible deployment, never through the Grafana API.
