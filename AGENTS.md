@@ -15,7 +15,7 @@ When the user explicitly asks for a fork-only fix ahead of upstream, run Mix fro
 
 ## Pull Requests
 
-Merge an upgrade pull request, which brings in an upstream release through the `teslamate-fork-upgrade` skill, with a merge commit, and merge every other pull request by squash. Squash and rebase both drop the upgrade's `-s ours` merge, which the skill reads to tell the fork's changes from upstream's.
+Merge an upgrade pull request, which brings in an upstream release through the `teslamate-fork-upgrade` skill from an `upgrade/teslamate-<version>` branch, with a merge commit, and merge every other pull request by squash. Squash and rebase both drop the upgrade's `-s ours` merge, which the skill reads to tell the fork's changes from upstream's.
 
 ## Production Data Access
 
